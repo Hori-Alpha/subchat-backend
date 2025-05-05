@@ -17,3 +17,19 @@ app.post('/suggest', (req, res) => {
 const port = process.env.PORT || 8080;
 app.listen(port, () => console.log('API listening on', port));
 
+app.post('/suggest', async (req, res) => {
+  const { history } = req.body;
+  // OpenAI へプロンプト生成
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4.1-nano-2025-04-14',
+    max_tokens: 100,
+    temperature: 0.7,
+    messages: [
+      { role: 'system', content: 'あなたはプロンプトを提案するアシスタントです。' },
+      ...history,
+      { role: 'user', content: '次に送ると良いプロンプトを3案ください。' }
+    ]
+  });
+  const text = completion.choices[0].message.content.split('\n').filter(x=>x.trim());
+  res.json({ suggestions: text.slice(0,3) });
+});
